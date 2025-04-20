@@ -1,0 +1,84 @@
+import tkinter as tk
+from tkinter import scrolledtext
+import time
+import threading
+
+
+class SpeedReaderApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Speed Reading Trainer")
+        self.root.geometry("1080x1920")
+        self.root.configure(bg="#f0f4f8")
+
+        # Input text area
+        self.text_input = scrolledtext.ScrolledText(
+            root, wrap=tk.WORD, width=60, height=8, font=("Arial", 12)
+        )
+        self.text_input.pack(pady=10)
+
+        # Start button
+        self.start_button = tk.Button(
+            root,
+            text="Start Reading",
+            command=self.start_reading,
+            font=("JoystixMonospace-Regular", 14),
+            bg="#4CAF50",
+            fg="white",
+            padx=10,
+            pady=5,
+        )
+        self.start_button.pack()
+
+        # Word display
+        self.word_display = tk.Label(
+            root, text="", font=("JoystixMonospace-Regular", 32), fg="#333", bg="#f0f4f8"
+        )
+        self.word_display.pack(pady=50)
+
+        self.words = []
+        self.running = False
+
+    def start_reading(self):
+        text = self.text_input.get("1.0", tk.END).strip()
+        if not text:
+            self.word_display.config(text="Please enter some text.")
+            return
+        self.words = text.split()
+        self.running = True
+        threading.Thread(target=self.read_text_multiple_times).start()
+
+    def read_text_multiple_times(self):
+        base_delay = 700  # Initial delay in ms
+        min_delay = 270   # Final fastest speed
+        rounds = 5
+
+        for round_num in range(rounds):
+            if not self.running:
+                break
+
+            # Calculate the delay for this round (linear progression)
+            delay = base_delay - ((base_delay - min_delay) * round_num / (rounds - 1))
+            self.display_message(f"Round {round_num + 1} - Speeding up...", 1.5)
+
+            for word in self.words:
+                if not self.running:
+                    break
+                self.word_display.config(text=word)
+                time.sleep(delay / 1000.0)
+
+        self.word_display.config(text="Done!")
+
+    def display_message(self, message, duration_sec):
+        self.word_display.config(text=message)
+        time.sleep(duration_sec)
+
+    def stop(self):
+        self.running = False
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = SpeedReaderApp(root)
+    root.protocol("WM_DELETE_WINDOW", app.stop)
+    root.mainloop()
